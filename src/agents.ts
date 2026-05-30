@@ -2,14 +2,15 @@ import readline from "node:readline/promises";
 import { stdin, stdout } from "node:process";
 import OpenAI from "openai";
 import { toolSchemas, toolHandlers } from "./tools";
+import { assistantText, callModel, toAssistantParam } from "./llm";
 
 type Msg = OpenAI.Chat.Completions.ChatCompletionMessageParam;
 
-// ⬇️ This is the bit we extract in Phase 3.
-const client = new OpenAI({
-  baseURL: "http://localhost:11434/v1",
-  apiKey: "ollama", // required by the SDK, ignored by Ollama
-});
+// // ⬇️ This is the bit we extract in Phase 3.
+// const client = new OpenAI({
+//   baseURL: "http://localhost:11434/v1",
+//   apiKey: "ollama", // required by the SDK, ignored by Ollama
+// });
 
 const SYSTEM = `You are a coding agent with filesystem access via tools.
 When asked to read, write, or inspect files, USE the tools — do not guess contents.
@@ -26,17 +27,14 @@ async function runAgent() {
 
     // Inner loop: keep running tools until the model produces a final answer.
     while (true) {
-      const res = await client.chat.completions.create({
-        model: "qwen3:14b",
+      const msg = await callModel({
         messages,
         tools: toolSchemas,
-        temperature: 0.2,
       });
-      const msg = res.choices[0].message;
-      messages.push(msg);
+      messages.push(toAssistantParam(msg));
 
       if (!msg.tool_calls?.length) {
-        console.log(`\nqwen> ${msg.content ?? ""}`);
+        console.log(`\nqwen> ${assistantText(msg)}`);
         break;
       }
 
