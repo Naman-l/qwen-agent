@@ -1,4 +1,4 @@
-# qwen-agent
+# local-agent-loop
 
 > **A sub-100-line, self-hosted AI agent you can build and run on your own machine.**
 
